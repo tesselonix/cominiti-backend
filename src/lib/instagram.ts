@@ -53,6 +53,7 @@ export function getAuthUrl(redirectUri: string, state?: string): string {
     url += `&state=${encodeURIComponent(state)}`;
   }
 
+  console.log('getAuthUrl generated:', url);
   return url;
 }
 
