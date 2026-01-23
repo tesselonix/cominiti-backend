@@ -6,14 +6,15 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
+  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || origin;
 
   if (error) {
     console.error('Instagram OAuth error:', error);
-    return NextResponse.redirect(`${origin}/dashboard?error=instagram_auth_denied`);
+    return NextResponse.redirect(`${frontendUrl}/dashboard?error=instagram_auth_denied`);
   }
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/dashboard?error=no_code`);
+    return NextResponse.redirect(`${frontendUrl}/dashboard?error=no_code`);
   }
 
   try {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.redirect(`${origin}/login?error=not_authenticated`);
+      return NextResponse.redirect(`${frontendUrl}/login?error=not_authenticated`);
     }
 
     const redirectUri = `${origin}/api/instagram/callback`;
@@ -55,14 +56,14 @@ export async function GET(request: Request) {
 
     if (updateError) {
       console.error('Failed to save Instagram data:', updateError);
-      return NextResponse.redirect(`${origin}/dashboard?error=save_failed`);
+      return NextResponse.redirect(`${frontendUrl}/dashboard?error=save_failed`);
     }
 
     // Redirect to onboarding with success
-    return NextResponse.redirect(`${origin}/onboarding?instagram=connected`);
+    return NextResponse.redirect(`${frontendUrl}/onboarding?instagram=connected`);
 
   } catch (err) {
     console.error('Instagram callback error:', err);
-    return NextResponse.redirect(`${origin}/dashboard?error=instagram_auth_failed`);
+    return NextResponse.redirect(`${frontendUrl}/dashboard?error=instagram_auth_failed`);
   }
 }
