@@ -1,5 +1,5 @@
 /**
- * Instagram Basic Display API Service
+ * Instagram API with Business Login Service
  * Handles OAuth flow and data fetching from Instagram Graph API
  */
 
@@ -44,9 +44,10 @@ interface MediaResponse {
 
 export function getAuthUrl(redirectUri: string): string {
   const appId = process.env.INSTAGRAM_APP_ID;
-  const scope = 'user_profile,user_media';
+  // Use Instagram Business Login scope
+  const scope = 'instagram_business_basic';
   
-  return `${INSTAGRAM_API_BASE}/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
+  return `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
 }
 
 export async function exchangeCodeForToken(code: string, redirectUri: string): Promise<TokenResponse> {
