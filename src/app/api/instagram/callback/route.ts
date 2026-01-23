@@ -6,9 +6,10 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
+  const state = searchParams.get('state'); // User ID passed from OAuth state
+
   // Use FRONTEND_URL env var, fallback to production frontend URL
   const frontendUrl = process.env.FRONTEND_URL || 'https://cominiti-frontend.vercel.app';
-
 
   if (error) {
     console.error('Instagram OAuth error:', error);
@@ -19,34 +20,40 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${frontendUrl}/dashboard?error=no_code`);
   }
 
+  // User ID must be passed via state parameter (cookies don't work across domains)
+  if (!state) {
+    console.error('No user ID in state parameter');
+    return NextResponse.redirect(`${frontendUrl}/dashboard?error=no_user_id`);
+  }
+
   try {
     const supabase = await createClient();
-
-    // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.redirect(`${frontendUrl}/login?error=not_authenticated`);
-    }
-
     const redirectUri = `${origin}/api/instagram/callback`;
 
     // Step 1: Exchange code for short-lived token
+    console.log('Exchanging code for token...');
     const tokenData = await exchangeCodeForToken(code, redirectUri);
+    console.log('Token received, user_id:', tokenData.user_id);
 
     // Step 2: Exchange for long-lived token (60 days)
+    console.log('Getting long-lived token...');
     const longLivedTokenData = await getLongLivedToken(tokenData.access_token);
+    console.log('Long-lived token received');
 
     // Step 3: Get Instagram profile
+    console.log('Fetching Instagram profile...');
     const profile = await getProfile(longLivedTokenData.access_token);
+    console.log('Profile received:', profile.username);
 
     // Calculate token expiry (expires_in is in seconds)
     const tokenExpiresAt = new Date(Date.now() + longLivedTokenData.expires_in * 1000);
 
-    // Step 4: Save to Supabase profile
+    // Step 4: Save to Supabase profile using user ID from state
+    console.log('Saving to database for user:', state);
     const { error: updateError } = await supabase
       .from('profiles')
       .upsert({
-        id: user.id,
+        id: state, // User ID from state parameter
         username: profile.username,
         instagram_user_id: profile.id,
         instagram_access_token: longLivedTokenData.access_token,
@@ -61,6 +68,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${frontendUrl}/dashboard?error=save_failed`);
     }
 
+    console.log('Instagram connection successful!');
     // Redirect to onboarding with success
     return NextResponse.redirect(`${frontendUrl}/onboarding?instagram=connected`);
 

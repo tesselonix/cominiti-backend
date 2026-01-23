@@ -42,12 +42,18 @@ interface MediaResponse {
   };
 }
 
-export function getAuthUrl(redirectUri: string): string {
+export function getAuthUrl(redirectUri: string, state?: string): string {
   const appId = process.env.INSTAGRAM_APP_ID;
   // Use Instagram Business Login scope
   const scope = 'instagram_business_basic';
 
-  return `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
+  let url = `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
+
+  if (state) {
+    url += `&state=${encodeURIComponent(state)}`;
+  }
+
+  return url;
 }
 
 export async function exchangeCodeForToken(code: string, redirectUri: string): Promise<TokenResponse> {
