@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { getAuthUrl } from '@/lib/instagram';
 
 export async function GET(request: Request) {
-  const { origin, searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
-  const redirectUri = `${origin}/api/instagram/callback`;
+  // Hardcode to production domain to ensure consistency
+  const redirectUri = 'https://api.cominiti.co/api/instagram/callback';
 
   if (!userId) {
     console.error('No userId provided to auth route');

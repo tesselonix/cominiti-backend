@@ -28,8 +28,8 @@ export async function GET(request: Request) {
   console.log('Headers:', Object.fromEntries(request.headers.entries()));
   console.log('================================');
 
-  // Use FRONTEND_URL env var, fallback to production frontend URL
-  const frontendUrl = process.env.FRONTEND_URL || 'https://www.cominiti.co';
+  // Force production frontend URL if we are on production backend
+  const frontendUrl = 'https://www.cominiti.co';
 
   if (error) {
     console.error('Instagram OAuth error:', error);
@@ -49,7 +49,8 @@ export async function GET(request: Request) {
 
   try {
     const supabase = await createClient();
-    const redirectUri = `${origin}/api/instagram/callback`;
+    // Hardcode to production domain to ensure consistency with auth route
+    const redirectUri = 'https://api.cominiti.co/api/instagram/callback';
 
     // Step 1: Exchange code for short-lived token
     console.log('Exchanging code for token...');
