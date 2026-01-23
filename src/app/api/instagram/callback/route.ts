@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   console.log('================================');
 
   // Use FRONTEND_URL env var, fallback to production frontend URL
-  const frontendUrl = process.env.FRONTEND_URL || 'https://cominiti-frontend.vercel.app';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://www.cominiti.co';
 
   if (error) {
     console.error('Instagram OAuth error:', error);
