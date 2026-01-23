@@ -46,7 +46,7 @@ export function getAuthUrl(redirectUri: string): string {
   const appId = process.env.INSTAGRAM_APP_ID;
   // Use Instagram Business Login scope
   const scope = 'instagram_business_basic';
-  
+
   return `https://www.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&response_type=code`;
 }
 
@@ -65,10 +65,22 @@ export async function exchangeCodeForToken(code: string, redirectUri: string): P
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error_message || 'Failed to exchange code for token');
+    console.error('Token exchange error:', error);
+    throw new Error(error.error_message || JSON.stringify(error) || 'Failed to exchange code for token');
   }
 
-  return response.json();
+  const result = await response.json();
+
+  // Instagram Business API returns data in array format: { data: [{ access_token, user_id }] }
+  if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+    return {
+      access_token: result.data[0].access_token,
+      user_id: result.data[0].user_id
+    };
+  }
+
+  // Fallback for direct response format
+  return result;
 }
 
 export async function getLongLivedToken(shortLivedToken: string): Promise<LongLivedTokenResponse> {
