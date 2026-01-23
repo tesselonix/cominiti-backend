@@ -6,7 +6,9 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
-  const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || origin;
+  // Use FRONTEND_URL env var, fallback to production frontend URL
+  const frontendUrl = process.env.FRONTEND_URL || 'https://cominiti-frontend.vercel.app';
+
 
   if (error) {
     console.error('Instagram OAuth error:', error);
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
 
   try {
     const supabase = await createClient();
-    
+
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -30,13 +32,13 @@ export async function GET(request: Request) {
 
     // Step 1: Exchange code for short-lived token
     const tokenData = await exchangeCodeForToken(code, redirectUri);
-    
+
     // Step 2: Exchange for long-lived token (60 days)
     const longLivedTokenData = await getLongLivedToken(tokenData.access_token);
-    
+
     // Step 3: Get Instagram profile
     const profile = await getProfile(longLivedTokenData.access_token);
-    
+
     // Calculate token expiry (expires_in is in seconds)
     const tokenExpiresAt = new Date(Date.now() + longLivedTokenData.expires_in * 1000);
 
