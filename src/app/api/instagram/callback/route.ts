@@ -3,10 +3,19 @@ import { createClient } from '@/lib/supabase/server';
 import { exchangeCodeForToken, getLongLivedToken, getProfile } from '@/lib/instagram';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const url = new URL(request.url);
+  const { searchParams, origin } = url;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const state = searchParams.get('state'); // User ID passed from OAuth state
+
+  // Debug logging
+  console.log('=== Instagram Callback Debug ===');
+  console.log('Full URL:', request.url);
+  console.log('Code:', code ? 'present' : 'missing');
+  console.log('State:', state);
+  console.log('All params:', Object.fromEntries(searchParams.entries()));
+  console.log('================================');
 
   // Use FRONTEND_URL env var, fallback to production frontend URL
   const frontendUrl = process.env.FRONTEND_URL || 'https://cominiti-frontend.vercel.app';
@@ -23,6 +32,7 @@ export async function GET(request: Request) {
   // User ID must be passed via state parameter (cookies don't work across domains)
   if (!state) {
     console.error('No user ID in state parameter');
+    console.error('Search params were:', Object.fromEntries(searchParams.entries()));
     return NextResponse.redirect(`${frontendUrl}/dashboard?error=no_user_id`);
   }
 
